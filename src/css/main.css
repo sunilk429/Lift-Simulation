@@ -1,0 +1,35 @@
+.floor {
+  width: 800px;
+  height: 120px;
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  border-bottom: 2px solid black;
+}
+.lift {
+  width: 80px;
+  height: 100px;
+  background-color: royalblue;
+}
+.button {
+  width: 64px;
+  height: 24px;
+  border-radius: 20%;
+  cursor: pointer;
+}
+.button:hover {
+  scale: 0.9;
+  transition: all 0.5s;
+}
+.button-up {
+  background-color: green;
+}
+.button-down {
+  background-color: yellow;
+}
+.controller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
