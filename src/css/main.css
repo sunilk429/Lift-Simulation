@@ -11,8 +11,8 @@ body {
   background-color: #222831;
   color: white;
   gap: 1rem;
-  margin-top: 1rem;
   min-width: 320px;
+  height: auto;
 }
 h1 {
   font-size: 2rem;
@@ -20,7 +20,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 12rem;
+  margin-top: 2rem;
 }
 h1,
 h2 {
@@ -96,7 +96,7 @@ button[type="submit"]:hover {
 #output {
   margin-top: 0;
   width: 1000px;
-  padding: 2rem;
+  padding: 1rem;
   padding-top: 0;
 }
 .floor {
