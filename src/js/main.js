@@ -82,17 +82,19 @@ inputForm.addEventListener("submit", (e) => {
     firstFloorLiftContainer.appendChild(liftDiv);
   });
 
+  inputForm.style.display = "none"; // Hide input form
+  output.style.display = "block"; // Display output/UI
+
   // Calculate dynamic width for each floor based on the number of lifts
   const liftWidth = 80; // Each lift's width in px
   const gap = 10; // Gap between lifts in px
-  const totalWidth = lifts * (liftWidth + gap); // Total width needed
-
+  const totalWidth = lifts * (liftWidth + 1.5 * gap); // Total width needed
+  // Calculate floor width
+  const floorWidth = document.querySelector(".floor").offsetHeight;
+  console.log("floorWidth", floorWidth);
   document.querySelectorAll(".floor").forEach((floor) => {
-    floor.style.minWidth = `${totalWidth + 1200}px`; // Apply width directly to .floor
+    floor.style.minWidth = `${totalWidth + floorWidth}px`; // Apply width directly to .floor
   });
-
-  inputForm.style.display = "none"; // Hide input form
-  output.style.display = "block"; // Display output/UI
 });
 
 // Click handler for Controller buttons
@@ -175,7 +177,7 @@ function moveLiftToFloor(lift, targetFloor, direction) {
 
   // Calculate the time it should take to reach target floor
   const travelTime = Math.abs(targetFloor - lift.currentFloor) * 1000;
-  const liftDiv = document.querySelector(`.lift:nth-child(${lift.id + 2})`);
+  const liftDiv = document.querySelector(`.lift:nth-child(${lift.id})`);
   const doorDiv = liftDiv.querySelector(".lift-doors");
 
   // Animate Lift
