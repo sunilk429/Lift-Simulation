@@ -1,28 +1,24 @@
-// Fetching elements by Id's
 const inputForm = document.getElementById("input-form");
 const output = document.getElementById("output");
 
-// Hide the output/UI initially
-output.style.display = "none";
+output.style.display = "none"; // Hide output/UI initially
 
-// Creating a state to handle our Application logic
 const state = {
   floors: 0,
   lifts: [],
   requests: [],
 };
 
-// Event Listener for submit button
 inputForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
-  // Fetching floors and lift values
-  const floors = document.getElementById("input-floors").value;
-  const lifts = document.getElementById("input-lifts").value;
+  // Fetching floor and lift values
+  const floors = Number(document.getElementById("input-floors").value);
+  const lifts = Number(document.getElementById("input-lifts").value);
 
-  // Assigning floors and lifts values to the state
   state.floors = floors;
 
+  // Initialize lifts
   for (let i = 0; i < lifts; i++) {
     state.lifts.push({
       id: i + 1,
@@ -41,51 +37,62 @@ inputForm.addEventListener("submit", (e) => {
   floorsArray.forEach((floor) => {
     const floorDiv = document.createElement("div");
     floorDiv.classList.add("floor");
-    floorDiv.innerHTML = `<h2>Floor ${floor}</h2>`;
 
-    // Add buttons for each floor
+    const floorNumber = document.createElement("h2");
+    floorNumber.textContent = `Floor ${floor}`;
+
     const controllerDiv = document.createElement("div");
     controllerDiv.classList.add("controller");
 
-    // Create upButton
     const upButton = document.createElement("button");
     upButton.innerHTML = "Up";
     upButton.classList.add("button", "button-up");
 
-    // Create downButton
     const downButton = document.createElement("button");
     downButton.innerHTML = "Down";
     downButton.classList.add("button", "button-down");
 
-    // Add buttons to controller
     if (floor !== floorsArray[0]) controllerDiv.appendChild(upButton);
     if (floor !== floorsArray[floorsArray.length - 1])
       controllerDiv.appendChild(downButton);
 
+    const liftContainerDiv = document.createElement("div");
+    liftContainerDiv.classList.add("lift-container");
+
+    floorDiv.appendChild(floorNumber);
     floorDiv.appendChild(controllerDiv);
+    floorDiv.appendChild(liftContainerDiv);
     output.appendChild(floorDiv);
 
-    // Attach event listeners to Controller Buttons
     upButton.addEventListener("click", () => handleClick(floor, "up"));
     downButton.addEventListener("click", () => handleClick(floor, "down"));
   });
 
-  // Constructing lifts
-  state.lifts.forEach((lift) => {
+  const firstFloorLiftContainer =
+    output.lastElementChild.querySelector(".lift-container");
+  state.lifts.forEach((lift, index) => {
     const liftDiv = document.createElement("div");
     liftDiv.classList.add("lift");
     liftDiv.innerHTML = `
       <div class="lift-doors">
-        <div class="door-left"></div>
-        <div class="door-right"></div>
+      <div class="door-left"></div>
+      <div class="door-right"></div>
       </div>
-    `;
-    output.lastElementChild.appendChild(liftDiv);
+      `;
+    firstFloorLiftContainer.appendChild(liftDiv);
   });
 
-  // Hide the input form and display the output/UI
-  inputForm.style.display = "none";
-  output.style.display = "block";
+  // Calculate dynamic width for each floor based on the number of lifts
+  const liftWidth = 80; // Each lift's width in px
+  const gap = 10; // Gap between lifts in px
+  const totalWidth = lifts * (liftWidth + gap); // Total width needed
+
+  document.querySelectorAll(".floor").forEach((floor) => {
+    floor.style.minWidth = `${totalWidth + 1200}px`; // Apply width directly to .floor
+  });
+
+  inputForm.style.display = "none"; // Hide input form
+  output.style.display = "block"; // Display output/UI
 });
 
 // Click handler for Controller buttons
@@ -97,13 +104,17 @@ function handleClick(floor, direction) {
 
   // Check if any lift is already moving to this floor
   const isLiftAlreadyMoving = state.lifts.some(
-    (lift) => lift.isMoving && lift.targetFloor === floor
+    (lift) =>
+      lift.isMoving &&
+      lift.targetFloor === floor &&
+      lift.direction === direction
   );
-
+  console.log(floor, direction);
   if (isRequestAlreadyExists || isLiftAlreadyMoving) return; // Prevent duplicate requests
 
   // Queue incoming requests
   state.requests.push({ floor, direction });
+  console.log(state.requests);
 
   // Start processing the requests
   DeQueueRequests();
@@ -113,21 +124,22 @@ function handleClick(floor, direction) {
 function DeQueueRequests() {
   // If there are requests to process, handle them
   if (state.requests.length > 0) {
-    const request = state.requests.shift(); // Get the first request in queue
+    const request = state.requests[0]; // Get the first request in queue
+
     const isRequestHandled = handleRequests(request.floor); // Try to handle the request
 
     // If no lift can handle the request right now, re-add it to the queue
-    if (!isRequestHandled) {
-      state.requests.unshift(request);
+    if (isRequestHandled) {
+      console.log("Request Handled", request);
     }
   }
 }
 
 // Handle the request by finding the nearest lift
-function handleRequests(requestedFloor) {
+function handleRequests(requestedFloor, direction) {
   const nearestLift = findNearestLift(requestedFloor); // Find the nearest lift
   if (nearestLift) {
-    moveLiftToFloor(nearestLift, requestedFloor); // Move lift to target floor
+    moveLiftToFloor(nearestLift, requestedFloor, direction); // Move lift to target floor
     return true;
   }
   return false;
@@ -153,9 +165,10 @@ function findNearestLift(requestedFloor) {
 }
 
 // Move the lift to the target floor
-function moveLiftToFloor(lift, targetFloor) {
+function moveLiftToFloor(lift, targetFloor, direction) {
   lift.isMoving = true;
   lift.targetFloor = targetFloor; // Track the target floor the lift is heading to
+  lift.direction = direction; // Track the Called Direction
 
   //Dynamically getting the floor height
   const floorHeight = document.querySelector(".floor").offsetHeight;
@@ -180,8 +193,9 @@ function moveLiftToFloor(lift, targetFloor) {
       setTimeout(() => {
         lift.isMoving = false;
         lift.targetFloor = null; // Reset the target floor after the lift stops
-
+        lift.direction = null; // Reset the direction after the lift stops
         // After the lift finishes, call DeQueueRequests to handle the next request
+        state.requests.shift();
         DeQueueRequests();
       }, 2500); // Close doors after a delay
     }, 2500); // Keep doors open for 2.5 seconds
