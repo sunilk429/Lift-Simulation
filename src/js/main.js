@@ -106,33 +106,27 @@ function handleClick(floor, direction) {
 
   // Check if any lift is already moving to this floor
   const isLiftAlreadyMoving = state.lifts.some(
-    (lift) =>
-      lift.isMoving &&
-      lift.targetFloor === floor &&
-      lift.direction === direction
+    (lift) => lift.isMoving && lift.targetFloor === floor
   );
-  console.log(floor, direction);
+
   if (isRequestAlreadyExists || isLiftAlreadyMoving) return; // Prevent duplicate requests
 
   // Queue incoming requests
   state.requests.push({ floor, direction });
-  console.log(state.requests);
 
   // Start processing the requests
   DeQueueRequests();
 }
-
 // Dequeue pending requests
 function DeQueueRequests() {
   // If there are requests to process, handle them
   if (state.requests.length > 0) {
-    const request = state.requests[0]; // Get the first request in queue
-
+    const request = state.requests.shift(); // Get the first request in queue
     const isRequestHandled = handleRequests(request.floor); // Try to handle the request
 
     // If no lift can handle the request right now, re-add it to the queue
-    if (isRequestHandled) {
-      console.log("Request Handled", request);
+    if (!isRequestHandled) {
+      state.requests.unshift(request);
     }
   }
 }
@@ -170,7 +164,7 @@ function findNearestLift(requestedFloor) {
 function moveLiftToFloor(lift, targetFloor, direction) {
   lift.isMoving = true;
   lift.targetFloor = targetFloor; // Track the target floor the lift is heading to
-  lift.direction = direction; // Track the Called Direction
+  //   lift.direction = direction; // Track the Called Direction
 
   //Dynamically getting the floor height
   const floorHeight = document.querySelector(".floor").offsetHeight;
@@ -195,9 +189,9 @@ function moveLiftToFloor(lift, targetFloor, direction) {
       setTimeout(() => {
         lift.isMoving = false;
         lift.targetFloor = null; // Reset the target floor after the lift stops
-        lift.direction = null; // Reset the direction after the lift stops
+        // lift.direction = null; // Reset the direction after the lift stops
         // After the lift finishes, call DeQueueRequests to handle the next request
-        state.requests.shift();
+        // state.requests.shift();
         DeQueueRequests();
       }, 2500); // Close doors after a delay
     }, 2500); // Keep doors open for 2.5 seconds
