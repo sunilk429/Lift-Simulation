@@ -170,7 +170,7 @@ function moveLiftToFloor(lift, targetFloor, direction) {
   const floorHeight = document.querySelector(".floor").offsetHeight;
 
   // Calculate the time it should take to reach target floor
-  const travelTime = Math.abs(targetFloor - lift.currentFloor) * 1000;
+  const travelTime = Math.abs(targetFloor - lift.currentFloor) * 2000;
   const liftDiv = document.querySelector(`.lift:nth-child(${lift.id})`);
   const doorDiv = liftDiv.querySelector(".lift-doors");
 
