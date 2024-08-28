@@ -16,7 +16,11 @@ inputForm.addEventListener("submit", (e) => {
   // Fetching floor and lift values
   const floors = Number(document.getElementById("input-floors").value);
   const lifts = Number(document.getElementById("input-lifts").value);
-
+  if (floors < 1) {
+    inputForm.style.display = "none"; // Hide input form
+    output.style.display = "block"; // Display output/UI
+    return `<div></div>`;
+  }
   state.floors = floors;
 
   // Initialize lifts
@@ -52,7 +56,8 @@ inputForm.addEventListener("submit", (e) => {
     const downButton = document.createElement("button");
     downButton.innerHTML = "Down";
     downButton.classList.add("button", "button-down");
-
+    console.log(floorsArray[0]);
+    if (floor === 1 && lifts > 0) controllerDiv.appendChild(upButton);
     if (floor !== floorsArray[0]) controllerDiv.appendChild(upButton);
     if (floor !== floorsArray[floorsArray.length - 1])
       controllerDiv.appendChild(downButton);
