@@ -7,6 +7,7 @@ const state = {
   floors: 0,
   lifts: [],
   requests: [],
+  //   isProcessing: false,
 };
 
 inputForm.addEventListener("submit", (e) => {
@@ -64,8 +65,16 @@ inputForm.addEventListener("submit", (e) => {
     floorDiv.appendChild(liftContainerDiv);
     output.appendChild(floorDiv);
 
-    upButton.addEventListener("click", () => handleClick(floor, "up"));
-    downButton.addEventListener("click", () => handleClick(floor, "down"));
+    upButton.addEventListener("click", () => {
+      //Disable button
+      upButton.disabled = true;
+      addRequest(floor, "up");
+    });
+    downButton.addEventListener("click", () => {
+      //Disable button
+      downButton.disabled = true;
+      addRequest(floor, "down");
+    });
   });
 
   const firstFloorLiftContainer =
@@ -88,84 +97,82 @@ inputForm.addEventListener("submit", (e) => {
   // Calculate dynamic width for each floor based on the number of lifts
   const liftWidth = 80; // Each lift's width in px
   const gap = 10; // Gap between lifts in px
-  const totalWidth = lifts * (liftWidth + 1.5 * gap); // Total width needed
+  const totalWidth = lifts * (liftWidth + gap); // Total width needed
   // Calculate floor width
-  const floorWidth = document.querySelector(".floor").offsetHeight;
-  console.log("floorWidth", floorWidth);
+  const floorWidth = document.querySelector(".floor").offsetWidth;
+
   document.querySelectorAll(".floor").forEach((floor) => {
     floor.style.minWidth = `${totalWidth + floorWidth}px`; // Apply width directly to .floor
   });
 });
 
-// Click handler for Controller buttons
-function handleClick(floor, direction) {
-  // Check if a request already exists in the queue
-  const isRequestAlreadyExists = state.requests.some(
-    (request) => request.floor === floor && request.direction === direction
+function addRequest(floor, direction) {
+  console.log("addRequest", floor, direction);
+  // Check if a request already exists for the same floor and direction
+  const existingRequest = state.requests.find(
+    (req) => req.floor === floor && req.direction === direction
   );
 
-  // Check if any lift is already moving to this floor
-  const isLiftAlreadyMoving = state.lifts.some(
-    (lift) => lift.isMoving && lift.targetFloor === floor
-  );
-
-  if (isRequestAlreadyExists || isLiftAlreadyMoving) return; // Prevent duplicate requests
-
-  // Queue incoming requests
-  state.requests.push({ floor, direction });
-
-  // Start processing the requests
-  DeQueueRequests();
-}
-// Dequeue pending requests
-function DeQueueRequests() {
-  // If there are requests to process, handle them
-  if (state.requests.length > 0) {
-    const request = state.requests.shift(); // Get the first request in queue
-    const isRequestHandled = handleRequests(request.floor); // Try to handle the request
-
-    // If no lift can handle the request right now, re-add it to the queue
-    if (!isRequestHandled) {
-      state.requests.unshift(request);
-    }
+  if (!existingRequest) {
+    state.requests.push({ floor, direction });
   }
 }
 
-// Handle the request by finding the nearest lift
-function handleRequests(requestedFloor, direction) {
-  const nearestLift = findNearestLift(requestedFloor); // Find the nearest lift
-  if (nearestLift) {
-    moveLiftToFloor(nearestLift, requestedFloor, direction); // Move lift to target floor
-    return true;
+// Process the requests in the queue
+function processRequests() {
+  // If the queue is empty, do nothing
+  if (state.requests.length === 0) return;
+
+  // Get the first request in the queue
+  const currentRequest = state.requests[0];
+
+  const availableLift = findNearestLift(currentRequest.floor);
+
+  if (availableLift) {
+    moveLift(availableLift, currentRequest.floor, currentRequest.direction);
+    // Remove the processed request from the queue
+    state.requests.shift();
   }
-  return false;
 }
 
 // Find the nearest available lift
 function findNearestLift(requestedFloor) {
+  // If no lifts are on the requested floor or if lifts are busy, find the nearest available lift
   let nearestLift = null;
   let minDistance = state.floors + 1;
 
-  state.lifts.forEach((lift) => {
+  for (let lift of state.lifts) {
     // Check if lift is available and not already moving
-    if (!lift.isMoving) {
-      const distance = Math.abs(lift.currentFloor - requestedFloor);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestLift = lift;
-      }
+    if (lift.isMoving) {
+      continue;
     }
-  });
+
+    const distance = Math.abs(lift.currentFloor - requestedFloor);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestLift = lift;
+    }
+  }
+
+  // Return the nearest lift if found, otherwise null
+  if (nearestLift) {
+    console.log("Nearest available lift found:", nearestLift);
+  } else {
+    console.log("No available lift found.");
+  }
 
   return nearestLift;
 }
 
 // Move the lift to the target floor
-function moveLiftToFloor(lift, targetFloor, direction) {
-  lift.isMoving = true;
+function moveLift(lift, targetFloor, direction) {
+  if (!lift.isMoving) lift.isMoving = true;
   lift.targetFloor = targetFloor; // Track the target floor the lift is heading to
   //   lift.direction = direction; // Track the Called Direction
-
+  //   console.log("Moving Lifts:");
+  //   state.lifts.forEach((lift) => {
+  //     console.log(lift.id, lift.currentFloor, lift.targetFloor, lift.isMoving);
+  //   });
   //Dynamically getting the floor height
   const floorHeight = document.querySelector(".floor").offsetHeight;
 
@@ -191,9 +198,34 @@ function moveLiftToFloor(lift, targetFloor, direction) {
         lift.targetFloor = null; // Reset the target floor after the lift stops
         // lift.direction = null; // Reset the direction after the lift stops
         // After the lift finishes, call DeQueueRequests to handle the next request
-        // state.requests.shift();
-        DeQueueRequests();
+
+        // console.log("Before Dequeue: ", state.requests);
+        // // state.requests.shift();
+        // console.log("After Dequeue: ", state.requests);
+
+        // Re-enable the up and down buttons for the target floor
+        const floorDiv =
+          document.querySelectorAll(".floor")[state.floors - targetFloor]; // Get the correct floor element
+        const upButton = floorDiv.querySelector(".button-up");
+        const downButton = floorDiv.querySelector(".button-down");
+
+        // Re-enable buttons if they exist
+        const currentTime = Math.floor(Date.now());
+
+        if (direction === "up" && upButton) {
+          console.log("enabled up button");
+          upTime = currentTime;
+          upButton.disabled = false;
+        } else if (direction === "down" && downButton) {
+          console.log("enabled down button");
+          downTime = currentTime;
+          downButton.disabled = false;
+        }
       }, 2500); // Close doors after a delay
     }, 2500); // Keep doors open for 2.5 seconds
   }, travelTime);
 }
+
+setInterval(() => {
+  processRequests();
+}, 1000);
