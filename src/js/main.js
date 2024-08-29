@@ -66,7 +66,9 @@ inputForm.addEventListener("submit", (e) => {
     liftContainerDiv.classList.add("lift-container");
 
     floorDiv.appendChild(floorNumber);
-    floorDiv.appendChild(controllerDiv);
+    if (lifts !== 0) {
+      floorDiv.appendChild(controllerDiv);
+    }
     floorDiv.appendChild(liftContainerDiv);
     output.appendChild(floorDiv);
 
